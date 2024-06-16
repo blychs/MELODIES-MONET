@@ -1,0 +1,102 @@
+analysis:
+  start_time: '20240101'
+  end_time: '20240202'
+  output_dir: '$HOME/Plots/AirNow_WRF-Chem'
+  debug: True
+
+
+model:
+  # Regional Atmospheric Chemistry Model/Earth System Research Lab
+  WRF-Chem:
+    files: '$HOME/Data/WRF/wrfout_hourly_d02*'
+    mod_type: 'wrfchem'
+    mod_kwargs:
+      mech: 'racm_esrl_vcp'
+    radius_of_influence: 12000 # meters
+    mapping: # model species name : obs species name
+      AirNow:
+        PM2_5_DRY: "PM2.5"
+        o3: "OZONE"
+    projection: None
+    plot_kwargs:
+      color: 'magenta'
+      marker: 's'
+      linestyle: '-'
+
+
+obs:
+  AirNow:
+    use_airnow: True
+    filename: '$HOME/Data/AirNow/AirNow_*.nc'
+    mod_type: 'wrfchem'
+    obs_type: pt_sfc
+    drop_unused_vars: True
+    variables:
+      PM2.5:
+        unit_scale: 1
+        unit_scale_method: '*'
+        nan_value: -1.0
+        ylabel_plot: 'PM2.5 (ug/m3)'
+        ty_scale: 2.0
+        vmin_plot: 0.0
+        vmax_plot: 22.0
+        vdiff_plot: 15.0
+        nlevels_plot: 23
+      OZONE:
+        unit_scale: 1
+        unit_scale_method: '*'
+        nan_value: -1.0
+        ylabel_plot: 'Ozone (ppbv)'
+        vmin_plot: 15.0
+        vmax_plot: 55.0
+        vdiff_plot: 20.0
+        nlevels_plot: 21
+
+
+plots:
+
+  plot_timeseries_group:
+    type: 'timeseries'
+    fig_kwargs:
+      figsize: [12, 6]
+    default_plot_kwargs:
+      linewidth: 2.0
+      markersize: 10
+    text_kwargs:
+      fontsize: 24
+    domain_type: ['all','state_name','state_name', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region']
+    domain_name: ['CONUS','CA','CO','R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10']
+    data: ['AirNow_WRF-Chem']
+    data_proc:
+      rem_obs_nan: True
+      ts_select_time: 'time_local'
+      ts_avg_window: 'H'
+      set_axis: True
+
+  plot_overlay_group:
+    type: 'spatial_overlay'
+    fig_kwargs:
+      states: True
+      figsize: [10, 5]
+    text_kwargs:
+      fontsize: 16
+    domain_type: ['all','state_name','state_name', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region']
+    domain_name: ['CONUS','CA','CO','R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10']
+    data: ['AirNow_WRF-Chem']
+    data_proc:
+      rem_obs_nan: True
+      set_axis: True
+
+  plot_bias_group:
+    type: 'spatial_bias'
+    fig_kwargs:
+      states: True
+      figsize: [10, 5]
+    text_kwargs:
+      fontsize: 16
+    domain_type: ['all','state_name','state_name', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region', 'epa_region']
+    domain_name: ['CONUS','CA','CO','R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10']
+    data: ['AirNow_WRF-Chem']
+    data_proc:
+      rem_obs_nan: True
+      set_axis: True
