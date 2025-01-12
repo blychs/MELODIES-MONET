@@ -13,12 +13,14 @@ import pandas as pd
 def cal_model_columns(modobj, sp='no2'):
 
     """
-    Calcuate model (WRF-Chem) NO2 columns for each layer, to pair with satellite data
+    Calcuate model columns for each layer, to pair with satellite data
     
     Parameters
     ------
     modobj : xarray.Dataset
         model data
+    sp : str
+        str with the species to return
   
     Output
     ------
@@ -28,7 +30,7 @@ def cal_model_columns(modobj, sp='no2'):
 
     # calculate the no2 tropospheric vertical columns and pressure from wrf-chem
     # update, mli, to be coordinated with monetio
-    no2    = modobj[sp]
+    species    = modobj[sp]
     tb     = modobj['temperature_k']
     pb2    = modobj['pres_pa_mid'] # time,z,y,x
     dzh    = modobj['dz_m'] # time,z,y,x, the model layer thickness 
@@ -37,7 +39,7 @@ def cal_model_columns(modobj, sp='no2'):
 
 
     # presure: base state + PB (KSMP)
-    nt, nz, ny, nx = no2.shape
+    nt, nz, ny, nx = species.shape
     #pb2  = np.zeros([nt, nz, ny, nx],dtype=np.float)
     #pb2  = pdata + pb
 
@@ -48,7 +50,7 @@ def cal_model_columns(modobj, sp='no2'):
 
     # --- initialize arrays
     # no2 columns for each layer
-    no2col     = np.zeros([nt, nz, ny, nx], dtype = np.float32)
+    speciescol     = np.zeros([nt, nz, ny, nx], dtype = np.float32)
     # temporary array
     value      = np.zeros([nt, ny, nx], dtype = np.float32)
 
@@ -66,16 +68,37 @@ def cal_model_columns(modobj, sp='no2'):
 
     # --- calculate NO2 columns by layers
     # convert to ppm
-    no2 = no2 / 1000.0
+    species = species / 1000.0
     for vl in range(nz):
         ad = pb2[:,vl,:,:] * (28.97e-3)/(8.314*tb[:,vl,:,:])
         #zh = ((ph[:,vl+1,:,:] + phb[:,vl+1,:,:]) - (ph[:,vl,:,:]+phb[:,vl,:,:]))/9.81
-        value[:,:,:]= no2[:,vl,:,:]*dzh[:,vl,:,:]*6.022e23/(28.97e-3)*1e-10*ad[:,:,:] # timex y x x
-        no2col[:,vl,:,:] = value[:,:,:]
+        value[:,:,:]= species[:,vl,:,:]*dzh[:,vl,:,:]*6.022e23/(28.97e-3)*1e-10*ad[:,:,:] # timex y x x
+        speciescol[:,vl,:,:] = value[:,:,:]
 
     # add to model
     #modobj['PB2'] = xr.DataArray(pb2,dims=["time", "z", "y","x"]) # change from "time" to "t"
     modobj['localtime'] = xr.DataArray(localtm, dims=["t","y", "x"])
-    modobj['no2col'] = xr.DataArray(no2col,dims=["t", "z", "y","x"])
+    modobj[f'{sp}col'] = xr.DataArray(speciescol,dims=["t", "z", "y","x"])
 
+    return modobj
+
+def cal_model_total_column(modobj, sp):
+    """
+    Calcuate model columns for each layer, to pair with satellite data
+    
+    Parameters
+    ------
+    modobj : xarray.Dataset
+        model data
+    sp : str
+        str with the species to return
+  
+    Output
+    ------
+    modobj : xarray.Dataset
+        revised model data with 'col' and 'localtime' added
+    """
+
+    data = cal_model_columns(modobj, sp)
+    modobj[f'{sp}totalcol'] = modobj[f'{sp}col'].sum(dim='z', keep_attr=True)
     return modobj
