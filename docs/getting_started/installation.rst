@@ -18,6 +18,7 @@ Optional dependencies
 - ``typer`` (to use the :doc:`/cli`;
   add ``rich`` `for <https://typer.tiangolo.com/release-notes/#060>`__ fancy tracebacks and ``--help``)
 - ``pooch`` (to enable automatic downloading of :doc:`tutorial datasets </examples/tutorial-data>`)
+- ``openpyxl`` (Used by pandas to read excel files without converting to csv. Can be installed with pip or conda.)
 
 Incompatibilities
 -----------------
