@@ -10,7 +10,7 @@ import numpy as np
 import xarray as xr
 import pandas as pd
 
-def cal_model_no2columns(modobj):
+def cal_model_columns(modobj, sp='no2'):
 
     """
     Calcuate model (WRF-Chem) NO2 columns for each layer, to pair with satellite data
@@ -28,7 +28,7 @@ def cal_model_no2columns(modobj):
 
     # calculate the no2 tropospheric vertical columns and pressure from wrf-chem
     # update, mli, to be coordinated with monetio
-    no2    = modobj['no2']
+    no2    = modobj[sp]
     tb     = modobj['temperature_k']
     pb2    = modobj['pres_pa_mid'] # time,z,y,x
     dzh    = modobj['dz_m'] # time,z,y,x, the model layer thickness 

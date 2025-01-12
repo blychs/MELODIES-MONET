@@ -1388,13 +1388,13 @@ class analysis:
 
                     if obs.sat_type == 'tropomi_l2_no2':
                         from .util import sat_l2_swath_utility as sutil
-                        from .util import cal_mod_no2col as mutil
+                        from .util import cal_mod_col as mutil
 
                         # calculate model no2 trop. columns. M.Li
                         # to fix the "time" duplicate error
                         model_obj = mod.obj
                         model_obj = model_obj.rename_dims({'time':'t'})
-                        model_obj = mutil.cal_model_no2columns(model_obj)
+                        model_obj = mutil.cal_model_columns(model_obj, 'no2')
                         #obs_dat = obs.obj.sel(time=slice(self.start_time.date(),self.end_time.date())).copy()
 
                         if mod.apply_ak == True:
