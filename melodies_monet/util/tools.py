@@ -502,3 +502,76 @@ def convert_std_to_amb_bc(ds,convert_vars=[],temp_var=None,pres_var=None):
     for var in convert_vars:
         ds[var] = ds[var]*convert_std_to_amb_bc
 
+
+def calc_partialcolumn(modobj, var="NO2"):
+    """Calculates the partial column of a species from its concentration.
+
+    Parameters
+    ----------
+    modobj : xr.Dataset
+        Model data
+    var : str
+        variable to calculate the partial column from
+
+    Returns
+    -------
+    xr.DataArray
+        DataArray containing the partial column of the species.
+    """
+    R = 8.314  # m3 * Pa / K / mol
+    NA = 6.022e23
+    ppbv2molmol = 1e-9
+    m2_to_cm2 = 1e4
+    fac_units = ppbv2molmol * NA / m2_to_cm2
+    partial_col = (
+        modobj[var]
+        * modobj["pres_pa_mid"]
+        * modobj["dz_m"]
+        * fac_units
+        / (R * modobj["temperature_k"])
+    )
+    partial_col.attrs = {"units": molecules/cm2, "description": f"{var} partial column"}
+    return partial_col
+
+
+def calc_totalcolumn(modobj, var="NO2"):
+    """Calculates the total column of a species from its concentration.
+
+    Parameters
+    ----------
+    modobj : xr.Dataset
+        Model data
+    var : str
+        variable to calculate the total column from
+
+    Returns
+    -------
+    xr.DataArray
+        DataArray containing the total column of the species.
+    """
+    data = calc_partialcolumn(modobj, var)
+    return data.sum(dim='z', keep_attrs=True)
+
+
+def calc_localgeotime(modobj):
+    """Calculates the local (geographic) time based on the longitude.
+
+    Parameters
+    ----------
+    modobj : xr.Dataset
+        Model data
+
+    Returns
+    -------
+    xr.DataArray
+        DataArray containing the local time based on longitude.
+    """
+    # Make sure that lon is in the range [-180, 180]
+    # This should be guaranteed by the reader, and it isn't needed,
+    # but it is very cheap to redo and should make us be safer.
+    lon = (modobj['longitude'] + 180) % 360 - 180
+
+    timedelta = lon * 24/360
+    localtime = modobj["time"] + np.datetime64(timedelta, 'h')
+    localtime.attrs['description'] = 'Geographic local time, based on longitude'
+    return localtime
