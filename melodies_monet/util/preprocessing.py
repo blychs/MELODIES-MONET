@@ -5,7 +5,7 @@
 
 import xarray as xr
 import numpy as np
-import tools
+from .tools import calc_totalcolumn
 
 
 def average_between_hours(data, start_hours, nhours):

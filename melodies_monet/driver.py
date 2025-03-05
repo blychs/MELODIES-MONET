@@ -121,6 +121,7 @@ class observation:
         self.data_proc = None
         self.variable_dict = None
         self.variable_summing = None
+        self.preprocessing = None
         self.resample = None
         self.time_var = None
         self.regrid_method = None
@@ -181,6 +182,8 @@ class observation:
                 from .util.read_util import read_aircraft_obs_csv
                 assert len(files) == 1, "MELODIES-MONET can only read one csv file"
                 self.obj = read_aircraft_obs_csv(filename=files[0],time_var=self.time_var)
+            elif self.obs_type == 'pandora_pgn':
+                self.obj = mio.pandora_pgn.open_mfdataset(self.file)
             else:
                 raise ValueError(f'extension {extension!r} currently unsupported')
         except Exception as e:
@@ -354,6 +357,7 @@ class observation:
             for v in vars:
                 if v in self.variable_dict:
                     d = self.variable_dict[v]
+                    self.obj[v].data = np.array(self.obj[v].data.copy())
                     # Apply removal of min, max, and nan on the units in the obs file first.
                     if 'obs_min' in d:
                         self.obj[v].data = self.obj[v].where(self.obj[v] >= d['obs_min'])
@@ -455,6 +459,7 @@ class model:
         self.mapping = None
         self.variable_dict = None
         self.variable_summing = None
+        self.preprocessing = None
         self.plot_kwargs = None
         self.proj = None
 
@@ -546,6 +551,7 @@ class model:
                 list_input_var = list_input_var + list(set(self.mapping[obs_map].keys()) - set(list_input_var))
         #Only certain models need this option for speeding up i/o.
 
+
         if 'cmaq' in self.model.lower():
             print('**** Reading CMAQ model output...')
             self.mod_kwargs.update({'var_list' : list_input_var})
@@ -616,6 +622,19 @@ class model:
         self.mask_and_scale()
         self.rename_vars() # rename any variables as necessary 
         self.sum_variables()
+
+        self.preprocessing = control_dict['model'][self.label].get('preprocessing', None)
+        if self.preprocessing is not None:
+            from .util import preprocessing as preproc
+            type_of_preproc = list(self.preprocessing.keys())
+            for preproc_type in type_of_preproc:
+                if preproc_type == "average":
+                    self.obj = preproc.average_between_hours(self.obj)
+                if preproc_type == "total_columns":
+                    for var in list([self.preprocessing[preproc_type]]):
+                        _tmp = xr.full_like(self.obj[var], fill_value=np.nan)
+                        _tmp[{"z": 0}] = preproc.calc_totalcolumn(self.obj, var)
+                        self.obj[var] = _tmp
 
     def rename_vars(self):
         """Rename any variables in model with rename set.
@@ -1183,7 +1202,7 @@ class analysis:
 
                 # pair the data
                 # if pt_sfc (surface point network or monitor)
-                if obs.obs_type.lower() == 'pt_sfc':
+                if obs.obs_type.lower() == 'pt_sfc' or 'pandora_pgn':
                     # convert this to pandas dataframe unless already done because second time paired this obs
                     if not isinstance(obs.obj, pd.DataFrame):
                         obs.obs_to_df()
@@ -1196,6 +1215,12 @@ class analysis:
                     except KeyError as e:
                         raise Exception("MONET requires an altitude dimension named 'z'") from e
                     # now combine obs with
+                    if obs.obs_type.lower() == 'pandora_pgn':
+                        time = obs.obj["time"].loc[
+                            (obs.obj["time"] >= self.start_time.to_datetime64())
+                            & (obs.obj["time"] <= self.end_time.to_datetime64())
+                    ]
+                        model_obj = model_obj.interp(time=time)
                     paired_data = model_obj.monet.combine_point(obs.obj, radius_of_influence=mod.radius_of_influence, suffix=mod.label)
                     if self.debug:
                         print('After pairing: ', paired_data)
