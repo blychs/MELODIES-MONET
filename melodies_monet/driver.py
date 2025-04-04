@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SP-License-Identifier: Apache-2.0
 #
 """
 Drive the entire analysis package via the :class:`analysis` class.
@@ -545,7 +545,7 @@ class model:
             vars_for_summing  = []
             for var in self.variable_summing.keys():
                 vars_for_summing= vars_for_summing + self.variable_summing[var]['vars']
-        list_input_var = [] + list(self.variable_dict.keys())
+        list_input_var = list(self.variable_dict.keys()) if isinstance(self.variable_dict, dict) else []
         for obs_map in self.mapping:
             if self.variable_summing is not None:
                 list_input_var = list_input_var + list(set(self.mapping[obs_map].keys()).union(set(vars_for_summing)) - set(self.variable_summing.keys()) - set(list_input_var) )
@@ -1223,6 +1223,8 @@ class analysis:
                     ]
                         model_obj = model_obj.interp(time=time)
                     paired_data = model_obj.monet.combine_point(obs.obj, radius_of_influence=mod.radius_of_influence, suffix=mod.label)
+                    if obs.obs_type.lower() == 'pandora_pgn':
+                        paired_data = paired_data.groupby(['siteid', 'time']).apply(lambda x: x.mean(numeric_only=True, skipna=True)).reset_index()
                     if self.debug:
                         print('After pairing: ', paired_data)
                     # this outputs as a pandas dataframe.  Convert this to xarray obj
