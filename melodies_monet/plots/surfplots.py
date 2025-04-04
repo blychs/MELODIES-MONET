@@ -490,6 +490,7 @@ def make_timeseries(df, df_reg=None, column=None, label=None, ax=None, avg_windo
     ax.tick_params(axis='both',which='minor',length=5.0,direction='out')
     ax.legend(frameon=False,fontsize=text_kwargs['fontsize']*0.8,
               bbox_to_anchor=(1.0, 0.9), loc='center left')
+    ax.yaxis.get_offset_text().set_fontsize(text_kwargs['fontsize']*0.8)
     if domain_type is not None and domain_name is not None:
         if domain_type == 'epa_region':
             ax.set_title('EPA Region ' + domain_name,fontweight='bold',**text_kwargs)
@@ -579,7 +580,7 @@ def make_diurnal_cycle(df, column=None, label=None, ax=None, avg_window=None, yl
         # plot the line
     else:
         plot_kwargs = { **dict(linestyle='-', marker='*', linewidth=1.2, markersize=6.), **plot_dict}
-    time = pd.DatetimeIndex(df["time"])
+    time = pd.DatetimeIndex(df.reset_index()["time"])
     df_plot_group = df.groupby(time.hour)
     df_plot = df_plot_group.median(numeric_only=True)
     ax = df_plot[column].plot(ax=ax, legend=True, **plot_kwargs) 
