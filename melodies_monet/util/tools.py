@@ -3,6 +3,7 @@
 from __future__ import division
 
 from builtins import range
+from numbers import Number
 
 import numpy as np
 import xarray as xr
@@ -592,3 +593,77 @@ def calc_geolocaltime(modobj):
     localtime = modobj["time"] + timedelta
     localtime.attrs['description'] = 'Geographic local time, based on longitude'
     return localtime
+
+
+def select_vmin_vmax_vdiff_nlevels(grp_dict, obs_plot_dict=None, set_yaxis=False):
+    """Selects the vmin, vmax, vidiff and nlevels of plots based on
+    the grp_dict, obs_dict and whether yaxis is True or False.
+
+    Parameters
+    ----------
+    grp_dict : dict
+        Dict with all of the YAML file options of the plot
+    obs_plot_dict : dict (option)
+        Dict with plotting variables submitted in the obs section of the
+        YAML file
+    set_yaxis : bool
+        Defined 
+
+    Returns
+    -------
+    Tuple(Number, Number, Number, int)
+        Tuple containing (in this order) vmin, vmax, vdiff, nlevels
+    """
+    if obs_plot_dict is None:
+        obs_plot_dict = {}
+    data_proc = obs_plot_dict if set_yaxis else grp_dict.get('data_proc', {})
+    vmin = data_proc.get('vmin_plot', None)
+    vmax = data_proc.get('vmax_plot', None)
+    vdiff = data_proc.get('vdiff_plot', None)
+    nlevels = data_proc.get('nlevels_plot', None)
+    if nlevels is None:
+        nlevels = data_proc.get('nlevels', None)
+    return ensure_ints_or_floats_list(vmin, vmax, vdiff, nlevels)
+
+
+def ensure_int_or_float(value):
+    """Makes sure that a value is either an int or a float.
+
+    Parameters
+    ----------
+    value : Number | None | str
+        Value to parse. Number ar None are considered valid and left
+        unchaged.
+
+    Returns
+    -------
+    Number
+        Parsed value
+    """
+    if isinstance(value, (Number | None)):
+        return value
+    try:
+        val = int(value)
+    except ValueError:
+        val = float(value)
+    return val
+
+
+def ensure_ints_or_floats_list(values):
+    """Makes sure that a list of values are lists or floats.
+
+    Parameters
+    ----------
+    values : list[Number | None | str]
+        List of values
+
+    Returns
+    -------
+    list[Number | None]
+        List of values
+    """
+    parsed_values = []
+    for x in values:
+        parsed_values.append(ensure_int_or_float(x))
+    return parsed_values
+
