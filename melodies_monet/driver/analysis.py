@@ -1267,7 +1267,10 @@ class analysis:
                                     f"Warning: variables dict for {obsvar}"
                                     " not provided, so defaults used"
                                 )
-                        vmin, vmax, vdiff, nlevels = select_vmin_vmax_vdiff_nlevels(grp_dict, obs_plot_dict, set_yaxis)
+                        lims = ['vmin_plot', 'vmax_plot', 'vdiff_plot', 'nlevels']
+                        vmin, vmax, vdiff, nlevels = tools.select_limits(
+                            grp_dict, obs_plot_dict, *lims, set_yaxis=set_yaxis
+                        )
 
 
                         # Determine to calculate mean values or percentile
@@ -2460,22 +2463,10 @@ class analysis:
                                 },
                             }
 
-                            if set_yaxis is True:
-                                if "ty_scale" in obs_plot_dict.keys():
-                                    plot_kwargs["ty_scale"] = obs_plot_dict["ty_scale"]
-                                else:
-                                    print(
-                                        "Warning: ty_scale not specified for "
-                                        + obsvar
-                                        + ", so default used."
-                                    )
-                                    plot_kwargs["ty_scale"] = 1.5  # Use default
-                            else:
-                                plot_kwargs["ty_scale"] = 1.5  # Use default
-                            try:
-                                plot_kwargs["ty_scale"] = grp_dict["data_proc"].get("ty_scale", 1.5)
-                            except KeyError:
-                                plot_kwargs["ty_scale"] = 2
+                            ty_scale = tools.select_limits(
+                                grp_dict, obs_plot_dict, "ty_scale", set_yaxis
+                            )
+                            plot_dict["ty_scale"] = ty_scale if ty_scale is not None else 1.5
                             if p_index == 0:
                                 # Plot initial obs/model
                                 dia = make_taylor(**plot_kwargs)
@@ -2594,18 +2585,9 @@ class analysis:
                             xrplots.make_spatial_dist(**plot_kwargs)
                         elif plot_type.lower() == "spatial_bias_exceedance":
                             if cal_reg:
-                                if set_yaxis is True:
-                                    if "vdiff_reg_plot" in obs_plot_dict.keys():
-                                        vdiff = obs_plot_dict["vdiff_reg_plot"]
-                                    else:
-                                        print(
-                                            "Warning: vdiff_reg_plot not specified for "
-                                            + obsvar
-                                            + ", so default used."
-                                        )
-                                        vdiff = None
-                                else:
-                                    vdiff = None
+                                vdiff = tools.select_limits(
+                                    grp_dict, obs_plot_dict, "vmin_reg_plot", set_yaxis
+                                )
 
                                 # p_label needs to be added to the outname for this plot
                                 outname = "{}.{}".format(outname, p_label)

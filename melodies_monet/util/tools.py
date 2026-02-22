@@ -4,6 +4,7 @@ from __future__ import division
 
 from builtins import range
 from numbers import Number
+import warnings
 
 import numpy as np
 import xarray as xr
@@ -595,7 +596,7 @@ def calc_geolocaltime(modobj):
     return localtime
 
 
-def select_vmin_vmax_vdiff_nlevels(grp_dict, obs_plot_dict=None, set_yaxis=False):
+def select_limits(grp_dict, obs_plot_dict, *args, set_yaxis=False):
     """Selects the vmin, vmax, vidiff and nlevels of plots based on
     the grp_dict, obs_dict and whether yaxis is True or False.
 
@@ -614,20 +615,38 @@ def select_vmin_vmax_vdiff_nlevels(grp_dict, obs_plot_dict=None, set_yaxis=False
     Tuple(Number, Number, Number, int)
         Tuple containing (in this order) vmin, vmax, vdiff, nlevels
     """
-    if obs_plot_dict is None:
-        obs_plot_dict = {}
     data_proc = obs_plot_dict if set_yaxis else grp_dict.get('data_proc', {})
-    vmin = data_proc.get('vmin_plot', None)
-    vmax = data_proc.get('vmax_plot', None)
-    vdiff = data_proc.get('vdiff_plot', None)
-    nlevels = data_proc.get('nlevels_plot', None)
-    if nlevels is None:
-        nlevels = data_proc.get('nlevels', None)
-    return ensure_ints_or_floats_list(vmin, vmax, vdiff, nlevels)
+    set_limits = []
+    if len(args) == 0:
+        warnings.warn("No values to parse")
+        return
+    if len(args) == 1:
+        return _select_lim(data_proc, args[0])
+    for arg in args:
+        set_limits.append(_select_lim(arg))
+    return set_limits
 
+def _select_lim(data_proc, sel_value):
+    """Selects the limit, looking first for the key and then for key_plot
+
+    Parameters
+    ----------
+    data_proc : dict
+        Where to look for the limits
+    sel_value : Number | None | str
+        Value to select/parse
+
+    Returns
+    -------
+    Number | None
+        Parsed value
+    """
+    raw_lim = data_proc.get(sel_value, None)
+    lim = raw_lim if raw_lim is not None else data_proc.get(f"{arg}_plot", None)
+    return ensure_int_or_float(lim)
 
 def ensure_int_or_float(value):
-    """Makes sure that a value is either an int or a float.
+    """Makes sure that a value is either an int or a float or None.
 
     Parameters
     ----------
@@ -647,23 +666,3 @@ def ensure_int_or_float(value):
     except ValueError:
         val = float(value)
     return val
-
-
-def ensure_ints_or_floats_list(values):
-    """Makes sure that a list of values are lists or floats.
-
-    Parameters
-    ----------
-    values : list[Number | None | str]
-        List of values
-
-    Returns
-    -------
-    list[Number | None]
-        List of values
-    """
-    parsed_values = []
-    for x in values:
-        parsed_values.append(ensure_int_or_float(x))
-    return parsed_values
-
