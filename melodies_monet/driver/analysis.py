@@ -2437,7 +2437,7 @@ class analysis:
                                 },
                             }
 
-                            if set_yaxis is True:
+                            if grp_dict.get('data_proc', {}).get('set_axis', False):
                                 if "ty_scale" in obs_plot_dict.keys():
                                     plot_kwargs["ty_scale"] = obs_plot_dict["ty_scale"]
                                 else:
