@@ -1592,7 +1592,7 @@ class analysis:
 
                         elif plot_type.lower() == "curtain":
                             # Set cmin and cmax from obs_plot_dict for colorbar limits
-                            if set_yaxis:
+                            if grp_dict.get('data_proc', {}).get('set_axis', False):
                                 if all(k in obs_plot_dict for k in ("vmin_plot", "vmax_plot")):
                                     cmin = obs_plot_dict["vmin_plot"]
                                     cmax = obs_plot_dict["vmax_plot"]
@@ -2558,7 +2558,7 @@ class analysis:
                             xrplots.make_spatial_dist(**plot_kwargs)
                         elif plot_type.lower() == "spatial_bias_exceedance":
                             if cal_reg:
-                                if set_yaxis is True:
+                                if grp_dict.get('data_proc', {}).get('set_axis', False):
                                     if "vdiff_reg_plot" in obs_plot_dict.keys():
                                         vdiff = obs_plot_dict["vdiff_reg_plot"]
                                     else:
