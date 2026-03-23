@@ -1041,7 +1041,6 @@ class analysis:
         pass
 
     ### TODO: Create the plotting driver (most complicated one)
-    # def plotting(self):
     def plotting(self):
         """Cycle through all the plotting groups (e.g., plot_grp1) listed in
         the input yaml file and create the plots.
@@ -1257,18 +1256,7 @@ class analysis:
                             use_ylabel = None
 
                         # Determine if set axis values or use defaults
-                        if grp_dict["data_proc"].get("set_axis", False):
-                            if obs_plot_dict:  # Is not null
-                                set_yaxis = True
-                            else:
-                                print(
-                                    "Warning: variables dict for "
-                                    + obsvar
-                                    + " not provided, so defaults used"
-                                )
-                                set_yaxis = False
-                        else:
-                            set_yaxis = False
+                        vmin, vmax, vdiff, nlevels = tools._select_vmin_vmax_vdiff(grp_dict, obs_plot_dict)
 
                         # Determine to calculate mean values or percentile
                         if "percentile_opt" in obs_plot_dict.keys():
@@ -1461,21 +1449,6 @@ class analysis:
 
                         # Types of plots
                         if plot_type.lower() == "timeseries" or plot_type.lower() == "diurnal":
-                            if set_yaxis is True:
-                                if all(k in obs_plot_dict for k in ("vmin_plot", "vmax_plot")):
-                                    vmin = obs_plot_dict["vmin_plot"]
-                                    vmax = obs_plot_dict["vmax_plot"]
-                                else:
-                                    print(
-                                        "Warning: vmin_plot and vmax_plot not specified for "
-                                        + obsvar
-                                        + ", so default used."
-                                    )
-                                    vmin = None
-                                    vmax = None
-                            else:
-                                vmin = None
-                                vmax = None
                             # Select time to use as index.
 
                             # 2024-03-01 MEB needs to only apply if pandas. fails for xarray
@@ -1634,14 +1607,6 @@ class analysis:
                                 cmin = None
                                 cmax = None
 
-                            # Set vmin and vmax from grp_dict for altitude limits
-                            if set_yaxis:
-                                vmin = grp_dict.get("vmin", None)
-                                vmax = grp_dict.get("vmax", None)
-                            else:
-                                vmin = None
-                                vmax = None
-
                             curtain_config = grp_dict  # Curtain plot grp YAML dict
                             # Inside your loop for processing each pair
                             obs_label = p.obs
@@ -1778,21 +1743,6 @@ class analysis:
 
                         # qzr++ Added vertprofile plotype for aircraft vs model comparisons
                         elif plot_type.lower() == "vertprofile":
-                            if set_yaxis is True:
-                                if all(k in obs_plot_dict for k in ("vmin_plot", "vmax_plot")):
-                                    vmin = obs_plot_dict["vmin_plot"]
-                                    vmax = obs_plot_dict["vmax_plot"]
-                                else:
-                                    print(
-                                        "Warning: vmin_plot and vmax_plot not specified for "
-                                        + obsvar
-                                        + ", so default used."
-                                    )
-                                    vmin = None
-                                    vmax = None
-                            else:
-                                vmin = None
-                                vmax = None
                             # Select altitude variable from the .yaml file
                             altitude_variable = grp_dict["altitude_variable"]
                             # Define the bins for binning the altitude
@@ -1849,22 +1799,6 @@ class analysis:
                                 )  # Clear axis for next plot.
 
                         elif plot_type.lower() == "vertical_single_date":
-                            # to use vmin, vmax from obs in yaml
-                            if set_yaxis is True:
-                                if all(k in obs_plot_dict for k in ("vmin_plot", "vmax_plot")):
-                                    vmin = obs_plot_dict["vmin_plot"]
-                                    vmax = obs_plot_dict["vmax_plot"]
-                                else:
-                                    print(
-                                        "warning: vmin_plot and vmax_plot not specified for "
-                                        + obsvar
-                                        + ",so default used."
-                                    )
-                                    vmin = None
-                                    vmax = None
-                            else:
-                                vmin = None
-                                vmax = None
                             # begin plotting
                             if p_index == 0:
                                 comb_bx, label_bx = splots.calculate_boxplot(
@@ -1917,22 +1851,6 @@ class analysis:
                                 )
 
                         elif plot_type.lower() == "vertical_boxplot_os":
-                            # to use vmin, vmax from obs in yaml
-                            if set_yaxis is True:
-                                if all(k in obs_plot_dict for k in ("vmin_plot", "vmax_plot")):
-                                    vmin = obs_plot_dict["vmin_plot"]
-                                    vmax = obs_plot_dict["vmax_plot"]
-                                else:
-                                    print(
-                                        "warning: vmin_plot and vmax_plot not specified for "
-                                        + obsvar
-                                        + ",so default used."
-                                    )
-                                    vmin = None
-                                    vmax = None
-                            else:
-                                vmin = None
-                                vmax = None
                             # begin plotting
                             if p_index == 0:
                                 comb_bx, label_bx = splots.calculate_boxplot(
@@ -1986,23 +1904,6 @@ class analysis:
                                 )
 
                         elif plot_type.lower() == "density_scatter_plot_os":
-                            # to use vmin, vmax from obs in yaml
-                            if set_yaxis is True:
-                                if all(k in obs_plot_dict for k in ("vmin_plot", "vmax_plot")):
-                                    vmin = obs_plot_dict["vmin_plot"]
-                                    vmax = obs_plot_dict["vmax_plot"]
-                                else:
-                                    print(
-                                        "warning: vmin_plot and vmax_plot not specified for "
-                                        + obsvar
-                                        + ",so default used."
-                                    )
-                                    vmin = None
-                                    vmax = None
-                            else:
-                                vmin = None
-                                vmax = None
-
                             # begin plotting
                             plt.figure()
                             sondeplots.density_scatter_plot_os(
@@ -2043,21 +1944,6 @@ class analysis:
                             del pairdf
 
                         elif plot_type.lower() == "violin":
-                            if set_yaxis:
-                                if all(k in obs_plot_dict for k in ("vmin_plot", "vmax_plot")):
-                                    vmin = obs_plot_dict["vmin_plot"]
-                                    vmax = obs_plot_dict["vmax_plot"]
-                                else:
-                                    print(
-                                        "Warning: vmin_plot and vmax_plot not specified for "
-                                        + obsvar
-                                        + ", so default used."
-                                    )
-                                    vmin = None
-                                    vmax = None
-                            else:
-                                vmin = None
-                                vmax = None
 
                             # Initialize the combined DataFrame for violin plots and labels/colors list
                             if p_index == 0:
@@ -2238,21 +2124,6 @@ class analysis:
                             else:
                                 pairdf_sel = pairdf
 
-                            if set_yaxis is True:
-                                if all(k in obs_plot_dict for k in ("vmin_plot", "vmax_plot")):
-                                    vmin = obs_plot_dict["vmin_plot"]
-                                    vmax = obs_plot_dict["vmax_plot"]
-                                else:
-                                    print(
-                                        "Warning: vmin_plot and vmax_plot not specified for "
-                                        + obsvar
-                                        + ", so default used."
-                                    )
-                                    vmin = None
-                                    vmax = None
-                            else:
-                                vmin = None
-                                vmax = None
                             # First for p_index = 0 create the obs box plot data array.
                             if p_index == 0:
                                 comb_bx, label_bx = splots.calculate_boxplot(
@@ -2300,21 +2171,6 @@ class analysis:
                                 )
 
                         elif plot_type.lower() == "multi_boxplot":
-                            if set_yaxis is True:
-                                if all(k in obs_plot_dict for k in ("vmin_plot", "vmax_plot")):
-                                    vmin = obs_plot_dict["vmin_plot"]
-                                    vmax = obs_plot_dict["vmax_plot"]
-                                else:
-                                    print(
-                                        "Warning: vmin_plot and vmax_plot not specified for "
-                                        + obsvar
-                                        + ", so default used."
-                                    )
-                                    vmin = None
-                                    vmax = None
-                            else:
-                                vmin = None
-                                vmax = None
                             # First for p_index = 0 create the obs box plot data array.
 
                             if p_index == 0:
@@ -2757,31 +2613,6 @@ class analysis:
                                 )
                         # JianHe: need updates to include regulatory option for overlay plots
                         elif plot_type.lower() == "spatial_overlay":
-                            if set_yaxis is True:
-                                if all(
-                                    k in obs_plot_dict
-                                    for k in ("vmin_plot", "vmax_plot", "nlevels_plot")
-                                ):
-                                    vmin = obs_plot_dict["vmin_plot"]
-                                    vmax = obs_plot_dict["vmax_plot"]
-                                    nlevels = obs_plot_dict["nlevels_plot"]
-                                elif all(k in obs_plot_dict for k in ("vmin_plot", "vmax_plot")):
-                                    vmin = obs_plot_dict["vmin_plot"]
-                                    vmax = obs_plot_dict["vmax_plot"]
-                                    nlevels = None
-                                else:
-                                    print(
-                                        "Warning: vmin_plot and vmax_plot not specified for "
-                                        + obsvar
-                                        + ", so default used."
-                                    )
-                                    vmin = None
-                                    vmax = None
-                                    nlevels = None
-                            else:
-                                vmin = None
-                                vmax = None
-                                nlevels = None
                             # Check if z dim is larger than 1. If so select, the first level as all models read through
                             # MONETIO will be reordered such that the first level is the level nearest to the surface.
                             # Create model slice and select time window for spatial plots
