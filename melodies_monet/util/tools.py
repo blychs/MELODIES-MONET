@@ -592,3 +592,72 @@ def calc_geolocaltime(modobj):
     localtime = modobj["time"] + timedelta
     localtime.attrs['description'] = 'Geographic local time, based on longitude'
     return localtime
+
+
+def parse_floats(data_to_parse):
+    """Parses data if it's not None. Designed to apply to vmin, vmax,
+    vdiff.
+
+    Parameters
+    ----------
+    data_to_parse : str, None, int, float, or combination of those.
+        data or list of data to parse
+
+    Returns
+    -------
+    float | None | list[float | None]
+    """
+    if not isinstance(data_to_parse, Iterable):
+        return parse_val_to_float_or_none(data_to_parse)
+    parsed_data = [parse_val_to_float_or_none(data) for data in data_to_parse]
+    return parsed_data
+
+
+def parse_val_to_float_or_none(data):
+    """Parses a single value to a float or None
+
+    Parameters
+    ----------
+    data : str | int | float | None
+        Data to parse
+
+    Returns
+    -------
+    float | None
+        Parsed data
+    """
+    parsed_data = float(data) if data is not None else None
+    return parsed_data
+
+
+def _select_vmin_vmax_vdiff(grp_dict, obs_plot_dict):
+    """Selects vmin and vmax from the existing data
+
+    Parameters
+    ----------
+    obs_plot_dict : dict | None
+        Dictionary with the data in the obs section of the YAML file
+    grp_dict : dict
+        Dictionary with the data in the plot section of the YAML file
+
+    Returns
+    -------
+    Tuple(float | None, float | None, float | None)
+    """
+    set_yaxis = False
+    if grp_dict.get("data_proc", {}).get("set_axis", False):
+        if obs_plot_dict is not None:
+            set_yaxis = True
+        else:
+            print(f"Warning: variables dict for {obsvar} not provided, so defaults used")
+    if set_yaxis:
+        vmin = obs_plot_dict.get("vmin_plot", None)
+        vmax = obs_plot_dict.get("vmax_plot", None)
+        vdiff = obs_plot_dict.get("vdiff_plot", None)
+        nlevels = obs_plot_dict.get("nlevels", None)
+    else:
+        vmin = grp_dict.get("data_proc", {}).get("vmin_plot", None)
+        vmax = grp_dict.get("data_proc", {}).get("vmax_plot", None)
+        vdiff = grp_dict.get("data_proc", {}).get("vdiff_plot", None)
+        nlevels = grp_dict.get("data_proc", {}).get("nlevels", None)
+    return tuple(parse_floats([vmin, vmax, vdiff]) + [nlevels])
