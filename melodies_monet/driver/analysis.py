@@ -6,6 +6,7 @@ import numpy as np
 import datetime
 
 from melodies_monet.driver import model, observation, pair
+from melodies_monet.util import tools
 
 
 class analysis:

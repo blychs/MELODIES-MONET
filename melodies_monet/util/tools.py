@@ -3,6 +3,7 @@
 from __future__ import division
 
 from builtins import range
+from typing import Iterable
 
 import numpy as np
 import xarray as xr
