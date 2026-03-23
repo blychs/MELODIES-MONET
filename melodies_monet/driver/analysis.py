@@ -2471,19 +2471,6 @@ class analysis:
                                 )  # Clear info for next plot.
 
                         elif plot_type.lower() == "spatial_bias":
-                            if set_yaxis is True:
-                                if "vdiff_plot" in obs_plot_dict.keys():
-                                    vdiff = obs_plot_dict["vdiff_plot"]
-                                else:
-                                    print(
-                                        "Warning: vdiff_plot not specified for "
-                                        + obsvar
-                                        + ", so default used."
-                                    )
-                                    vdiff = None
-                            else:
-                                vdiff = None
-                            # p_label needs to be added to the outname for this plot
                             outname = "{}.{}".format(outname, p_label)
                             splots.make_spatial_bias(
                                 pairdf,
